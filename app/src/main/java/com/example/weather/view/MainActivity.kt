@@ -1,4 +1,4 @@
-package com.example.weather
+package com.example.weather.view
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -19,6 +19,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.weather.BuildConfig.APPLICATION_ID
+import com.example.weather.R
 import com.example.weather.databinding.ActivityMainBinding
 import com.example.weather.network.WeatherEntity
 import com.example.weather.network.WeatherService

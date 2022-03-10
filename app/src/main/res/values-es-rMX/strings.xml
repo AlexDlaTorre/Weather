@@ -10,7 +10,7 @@
     <string name="pressure">Presión</string>
     <string name="update">Actualizar</string>
     <string name="humidity">Humedad</string>
-    <string name="logo">Personal Weather</string>
+    <string name="logo">Weather</string>
     <string name="permission_denied_explanation">"         El permiso fue negado, pero es indispensable para usar el app.     "</string>
     <string name="permission_rationale">"         El permiso de ubicación es indispensable para usar el app.     "</string>
     <string name="no_location_detected">"         No se puede acceder a la ubicación. Asegurate que el servicio de ubicación está activado en tu dispositivo     "</string>

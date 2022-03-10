@@ -9,7 +9,7 @@
     <string name="pressure">Pression</string>
     <string name="update">Updated</string>
     <string name="humidity">Humidity</string>
-    <string name="logo">Personal Weather</string>
+    <string name="logo">Weather</string>
     <string name="no_location_detected">"Can not change location. Make sure the locale service is active on your device."</string>
     <string name="permission_denied_explanation">"Access denied, location is required to use the app."</string>
     <string name="permission_rationale">"Location permission is needed to use the app"</string>
