@@ -8,9 +8,9 @@ interface WeatherService {
     //We use corrutines so the main threat saturated
     suspend fun getWeatherById(
         // The parameters are specified by @query
-//        @Query("lat") lat: String,
-//        @Query("lon") lon: String,
-        @Query("id") lon: Long,
+        @Query("lat") lat: String,
+        @Query("lon") lon: String,
+//        @Query("id") lon: Long,
         @Query("units") units: String?,
         @Query("lang") lang: String?,
         //api key
