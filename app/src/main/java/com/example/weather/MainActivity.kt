@@ -1,9 +1,10 @@
 package com.example.weather
 
 import android.Manifest
-import android.content.ContentValues.TAG
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -13,7 +14,6 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -23,6 +23,8 @@ import com.example.weather.databinding.ActivityMainBinding
 import com.example.weather.network.WeatherEntity
 import com.example.weather.network.WeatherService
 import com.example.weather.utils.checkForInternet
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +40,11 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivityError"
     private var unit: String = "imperial"
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
+    private var latitude = ""
+    private var longitude = ""
+    private var units = false
+    private var language = false
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +52,8 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if (!checkPermissions()) {
             requestPermissions()
@@ -61,10 +70,14 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun setupViewData() {
+    private fun setupViewData(location: Location) {
 
         if (checkForInternet(this)) {
+            // Se coloca en este punto para permitir su ejecución
+            showIndicator(true)
             lifecycleScope.launch {
+                latitude = location.latitude.toString()
+                longitude = location.longitude.toString()
                 formatResponse(getWeather())
             }
         } else {
@@ -75,7 +88,7 @@ class MainActivity : AppCompatActivity() {
 
     //Api call through a corrutine
     private suspend fun getWeather(): WeatherEntity = withContext(Dispatchers.IO) {
-        //setUpTitle(R.string.main_retrofit_in_progress)
+        Log.e(TAG, "CORR Lat: $latitude Long: $longitude")
 
         // Retrofit constructor
         val retrofit: Retrofit = Retrofit.Builder()
@@ -86,7 +99,7 @@ class MainActivity : AppCompatActivity() {
 
         // Send arguments to weatherservice interface
         val service: WeatherService = retrofit.create(WeatherService::class.java)
-        service.getWeatherById(3984583L, unit, "en", "c5c5c63d955916f41d5b042c22ede803")
+        service.getWeatherById(latitude, longitude, unit, "en", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
 
     }
 
@@ -99,7 +112,6 @@ class MainActivity : AppCompatActivity() {
             val address = "$cityName, $country"
             val tempMin = "Mín: ${weatherEntity.main.temp_min.toInt()}º"
             val tempMax = "Max: ${weatherEntity.main.temp_max.toInt()}º"
-            // Capitalizar la primera letra de la descripción
             var status = ""
             val weatherDescription = weatherEntity.weather[0].description
             if (weatherDescription.isNotEmpty()) {
@@ -163,6 +175,27 @@ class MainActivity : AppCompatActivity() {
             val tempCelsius = tempFarenheit.times(1.8).toInt()
             println(tempCelsius)
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getLastLocation(onLocation: (location: Location) -> Unit) {
+        Log.d(TAG, "Aquí estoy: $latitude Long: $longitude")
+        fusedLocationClient.lastLocation
+            .addOnCompleteListener { taskLocation ->
+                if (taskLocation.isSuccessful && taskLocation.result != null) {
+
+                    val location = taskLocation.result
+
+                    latitude = location?.latitude.toString()
+                    longitude = location?.longitude.toString()
+                    Log.d(TAG, "GetLasLoc Lat: $latitude Long: $longitude")
+
+                    onLocation(taskLocation.result)
+                } else {
+                    Log.w(TAG, "getLastLocation:exception", taskLocation.exception)
+                    showSnackbar(R.string.no_location_detected)
+                }
+            }
     }
 
     private fun checkPermissions() =
