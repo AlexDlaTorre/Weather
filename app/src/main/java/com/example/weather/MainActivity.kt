@@ -1,16 +1,30 @@
 package com.example.weather
 
+import android.Manifest
+import android.content.ContentValues.TAG
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.preference.PreferenceManager
+import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import coil.load
+import com.example.weather.BuildConfig.APPLICATION_ID
 import com.example.weather.databinding.ActivityMainBinding
 import com.example.weather.network.WeatherEntity
 import com.example.weather.network.WeatherService
 import com.example.weather.utils.checkForInternet
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,6 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivityError"
     private var unit: String = "imperial"
+    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +46,18 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupViewData()
+        if (!checkPermissions()) {
+            requestPermissions()
+        } else {
+            // despues de que se obtiene la location se ejecuta el setUpViewData con esa location
+            getLastLocation() { location ->
+                setupViewData(location)
+            }
+        }
+
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        units = sharedPreferences.getBoolean("units", false)
+        language = sharedPreferences.getBoolean("language", false)
 
     }
 
@@ -134,8 +160,94 @@ class MainActivity : AppCompatActivity() {
     fun getCelsius(weatherEntity: WeatherEntity) {
         val tempFarenheit = weatherEntity.main.temp.toInt()
         binding.buttonCelsius.setOnClickListener {
-           val tempCelsius =  tempFarenheit.times(1.8).toInt()
+            val tempCelsius = tempFarenheit.times(1.8).toInt()
             println(tempCelsius)
+        }
+    }
+
+    private fun checkPermissions() =
+        ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PermissionChecker.PERMISSION_GRANTED
+
+    private fun startLocationPermissionRequest() {
+        ActivityCompat.requestPermissions(
+            this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+            REQUEST_PERMISSIONS_REQUEST_CODE
+        )
+    }
+
+
+    private fun requestPermissions() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        ) {
+            // Gives an explenation to permit request. If the user denied permit but does't choose "don't ask again"
+            Log.i(
+                TAG,
+                "Location permission is needed to use the app"
+            )
+            showSnackbar(R.string.permission_rationale, android.R.string.ok) {
+                // Ask permit
+                startLocationPermissionRequest()
+            }
+
+        } else {
+            // Ask permit
+            Log.i(TAG, "Requesting permit")
+            startLocationPermissionRequest()
+        }
+    }
+
+    private fun showSnackbar(
+        snackStrId: Int,
+        actionStrId: Int = 0,
+        listener: View.OnClickListener? = null
+    ) {
+        val snackbar = Snackbar.make(
+            findViewById(android.R.id.content), getString(snackStrId),
+            BaseTransientBottomBar.LENGTH_INDEFINITE
+        )
+        if (actionStrId != 0 && listener != null) {
+            snackbar.setAction(getString(actionStrId), listener)
+        }
+        snackbar.show()
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Log.i(TAG, "onRequestPermissionResult")
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            when {
+                // The flow is interrupted, the request is canceled
+                grantResults.isEmpty() -> Log.i(TAG, "The user interaction was canceled")
+
+                // Permit granted
+                (grantResults[0] == PackageManager.PERMISSION_GRANTED) -> getLastLocation(this::setupViewData)
+
+
+                else -> {
+                    showSnackbar(
+                        R.string.permission_denied_explanation, R.string.settings
+                    ) {
+                        // Builds the intent that shows the window configuration of the app.
+                        val intent = Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", APPLICATION_ID, null)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        startActivity(intent)
+                    }
+                }
+            }
         }
     }
 }
