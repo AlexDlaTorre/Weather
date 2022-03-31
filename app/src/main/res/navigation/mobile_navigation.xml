@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.example.weather.view.SevenDaysFragment"
+        android:name="com.example.weather.view.SearchFragment"
         android:label="@string/menu_home"
-        tools:layout="@layout/fragment_seven_days" />
+        tools:layout="@layout/fragment_search" />
 
     <fragment
         android:id="@+id/nav_gallery"

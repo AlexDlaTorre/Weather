@@ -3,9 +3,6 @@ package com.example.weather.view
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.example.weather.view.SevenDaysFragment
-import com.example.weather.view.TenDaysFragment
-import com.example.weather.view.TodayFragment
 
 class ViewPagerAdapter (fa: FragmentActivity): FragmentStateAdapter(fa) {
 
@@ -21,9 +18,9 @@ class ViewPagerAdapter (fa: FragmentActivity): FragmentStateAdapter(fa) {
                 TodayFragment()
             }
             1 -> {
-                SevenDaysFragment() }
+                TenDaysFragment() }
             2 -> {
-                TenDaysFragment()
+                SearchFragment()
             }
             else -> TodayFragment()
         }

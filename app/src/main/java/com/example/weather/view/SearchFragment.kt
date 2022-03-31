@@ -3,14 +3,11 @@ package com.example.weather.view
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -23,16 +20,13 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import coil.load
-import com.example.weather.BuildConfig.APPLICATION_ID
 import com.example.weather.R
 import com.example.weather.commons.utils.checkForInternet
-import com.example.weather.databinding.FragmentTodayBinding
+import com.example.weather.databinding.FragmentSearchBinding
 import com.example.weather.network.WeatherEntity
-import com.example.weather.network.WeatherService
+import com.example.weather.network.WeatherIdService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.material.snackbar.BaseTransientBottomBar
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,16 +34,17 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
-class TodayFragment : Fragment() {
+class SearchFragment : Fragment() {
     private val TAG = "MainActivityError"
-    private var unit: String = "metric"
+    private var unit2: String = "metric"
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
-    private var latitude = ""
-    private var longitude = ""
-    private var units = false
-    private var language = false
+    private var latitude2 = ""
+    private var longitude2 = ""
+    private var id: Long = 3981467
+    private var units2 = false
+    private var language2 = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var binding: FragmentTodayBinding
+    private lateinit var binding: FragmentSearchBinding
 
     companion object {
         private const val ARG_OBJECT = "object"
@@ -59,10 +54,9 @@ class TodayFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentTodayBinding.inflate(inflater, container, false)
+        binding = FragmentSearchBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-//        return inflater.inflate(R.layout.fragment_today, container, false)
         return root
 
     }
@@ -80,8 +74,8 @@ class TodayFragment : Fragment() {
         }
 
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        units = sharedPreferences.getBoolean("units", false)
-        language = sharedPreferences.getBoolean("language", false)
+        units2 = sharedPreferences.getBoolean("units", false)
+        language2 = sharedPreferences.getBoolean("language", false)
     }
 
     private fun setupViewData(location: Location) {
@@ -90,20 +84,20 @@ class TodayFragment : Fragment() {
             // Se coloca en este punto para permitir su ejecución
             showIndicator(true)
             lifecycleScope.launch {
-                latitude = location.latitude.toString()
-                longitude = location.longitude.toString()
+                latitude2 = location.latitude.toString()
+                longitude2 = location.longitude.toString()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     formatResponse(getWeather())
                 }
             }
         } else {
             showError(getString(com.example.weather.R.string.no_internet_access))
-            binding.detailsContainer.isVisible = false
+            binding.detailsContainer2.isVisible = false
         }
     }
 
     private suspend fun getWeather(): WeatherEntity = withContext(Dispatchers.IO) {
-        Log.e(TAG, "CORR Lat: $latitude Long: $longitude")
+        Log.e(TAG, "CORR Lat: $latitude2 Long: $longitude2")
 
         val retrofit: Retrofit = Retrofit.Builder()
             .baseUrl("https://api.openweathermap.org/")
@@ -111,8 +105,8 @@ class TodayFragment : Fragment() {
             .build()
 
         // Send arguments to weatherservice interface
-        val service: WeatherService = retrofit.create(WeatherService::class.java)
-        service.getWeatherByLonLat(latitude, longitude, unit, "en", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
+        val service: WeatherIdService = retrofit.create(WeatherIdService::class.java)
+        service.getWeatherById(id, unit2, "en", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
 
     }
 
@@ -158,10 +152,12 @@ class TodayFragment : Fragment() {
             ).format(Date(dt * 1000))
             val sunrise = weatherEntity.sys.sunrise
             val sunriseFormat =
-                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunrise * 1000))
+                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+                    .format(Date(sunrise * 1000))
             val sunset = weatherEntity.sys.sunset
             val sunsetFormat =
-                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunset * 1000))
+                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+                    .format(Date(sunset * 1000))
             val wind = "${weatherEntity.wind.speed} km/h"
             val pressure = "${weatherEntity.main.pressure} mb"
             val humidity = "${weatherEntity.main.humidity}%"
@@ -171,20 +167,20 @@ class TodayFragment : Fragment() {
             val iconUrl = "https://openweathermap.org/img/w/$icon.png"
 
             binding.apply {
-                iconImageView.load(iconUrl)
-                adressTextView.text = address
-                dateTextView.text = updatedAt
-                temperatureTextView.text = temp
-                statusTextView.text = status
-                tempMinTextView.text = tempMin
-                tempMaxTextView.text = tempMax
-                sunriseTextView.text = sunriseFormat
-                sunsetTextView.text = sunsetFormat
-                windTextView.text = wind
-                pressureTextView.text = pressure
-                humidityTextView.text = humidity
-                detailsContainer.isVisible = true
-                feelsLikeTextView.text = feelsLike
+                iconImageView2.load(iconUrl)
+                adressTextView2.text = address
+                dateTextView2.text = updatedAt
+                temperatureTextView2.text = temp
+                statusTextView2.text = status
+                tempMinTextView2.text = tempMin
+                tempMaxTextView2.text = tempMax
+                sunriseTextView2.text = sunriseFormat
+                sunsetTextView2.text = sunsetFormat
+                windTextView2.text = wind
+                pressureTextView2.text = pressure
+                humidityTextView2.text = humidity
+                detailsContainer2.isVisible = true
+                feelsLikeTextView2.text = feelsLike
             }
 
             showIndicator(false)
@@ -200,7 +196,7 @@ class TodayFragment : Fragment() {
     }
 
     private fun showIndicator(visible: Boolean) {
-        binding.progressBarIndicator.isVisible = visible
+        binding.progressBarIndicator2.isVisible = visible
     }
 
     @SuppressLint("MissingPermission")
@@ -211,9 +207,9 @@ class TodayFragment : Fragment() {
 
                     val location = taskLocation.result
 
-                    latitude = location?.latitude.toString()
-                    longitude = location?.longitude.toString()
-                    Log.d(TAG, "GetLasLoc Lat: $latitude Long: $longitude")
+                    latitude2 = location?.latitude.toString()
+                    longitude2 = location?.longitude.toString()
+                    Log.d(TAG, "GetLasLoc Lat: $latitude2 Long: $longitude2")
 
                     onLocation(taskLocation.result)
                 } else {
@@ -250,7 +246,7 @@ class TodayFragment : Fragment() {
             )
 //            showError(R.string.permission_rationale)
 //                , android.R.string.ok) {
-                // Ask permit
+            // Ask permit
 //                startLocationPermissionRequest()
 //            }
 
