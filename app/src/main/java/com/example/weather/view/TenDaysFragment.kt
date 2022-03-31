@@ -18,16 +18,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.weather.R
 import com.example.weather.commons.utils.checkForInternet
 import com.example.weather.databinding.FragmentTenDaysBinding
 import com.example.weather.databinding.FragmentTodayBinding
+import com.example.weather.model.one.Daily
+import com.example.weather.model.one.DaysAdapter
 import com.example.weather.model.one.OneEntity
 import com.example.weather.network.WeatherEntity
 import com.example.weather.network.WeatherOneCallService
 import com.example.weather.network.WeatherService
+import com.example.weather.view.ui.home.ui.main.TenDaysViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +53,7 @@ class TenDaysFragment : Fragment() {
     private var language = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var binding: FragmentTenDaysBinding
+    private val viewmodel: TenDaysViewModel by viewModels()
 
     companion object {
         private const val ARG_OBJECT = "object"
@@ -58,10 +65,12 @@ class TenDaysFragment : Fragment() {
     ): View? {
         binding = FragmentTenDaysBinding.inflate(inflater, container, false)
         val root: View = binding.root
-
-//        return inflater.inflate(R.layout.fragment_today, container, false)
+        observers()
         return root
 
+    }
+    private fun observers() {
+        viewmodel.personajes.observe(viewLifecycleOwner,::mostrarPersonajes)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -69,13 +78,13 @@ class TenDaysFragment : Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
         startApp()
-
+        observers()
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         units = sharedPreferences.getBoolean("units", false)
         language = sharedPreferences.getBoolean("language", false)
     }
 
-    fun startApp(){
+    fun startApp() {
         getLastLocation() { location ->
             setupViewData(location)
         }
@@ -110,7 +119,14 @@ class TenDaysFragment : Fragment() {
 
         // Send arguments to weatherservice interface
         val service: WeatherOneCallService = retrofit.create(WeatherOneCallService::class.java)
-        service.getWeatherByLonLat2(latitude, longitude, unit, "en","minutely,hourly", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
+        service.getWeatherByLonLat2(
+            latitude,
+            longitude,
+            unit,
+            "en",
+            "minutely,hourly",
+            "30ba6cd1ad33ea67e2dfd78a8d28ae62"
+        )
 
     }
 
@@ -136,6 +152,7 @@ class TenDaysFragment : Fragment() {
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun formatResponse(oneEntity: OneEntity) {
+
         println("AQUI DIARIO2 ${oneEntity.daily}")
         try {
             println("AQUI DIARIO ${oneEntity.daily}")
@@ -165,6 +182,15 @@ class TenDaysFragment : Fragment() {
 
                     latitude = location?.latitude.toString()
                     longitude = location?.longitude.toString()
+
+                    viewmodel.getForecast(
+                        location.latitude,
+                        location.longitude,
+                        unit,
+                        "en",
+                        "minutely,hourly",
+                        "30ba6cd1ad33ea67e2dfd78a8d28ae62"
+                    )
                     Log.d(TAG, "GetLasLoc Lat: $latitude Long: $longitude")
 
                     onLocation(taskLocation.result)
@@ -174,6 +200,19 @@ class TenDaysFragment : Fragment() {
                 }
             }
     }
+    private fun mostrarPersonajes(personajes: ArrayList<Daily>) {
+        personajes.forEach {
+//            initRecycler(personajes,binding?.recyclerView)
+        }
+    }
+
+//    private fun initRecycler(lista: ArrayList<Daily>, recyclerView: RecyclerView?){
+//        val adaptador = DaysAdapter(requireActivity(),lista)
+//        recyclerView?.apply {
+//            layoutManager = LinearLayoutManager(requireActivity())
+//            adapter = adaptador
+//        }
+//    }
 
     private fun checkPermissions() =
         ActivityCompat.checkSelfPermission(
