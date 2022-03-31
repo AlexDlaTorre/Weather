@@ -2,32 +2,40 @@ package com.example.weather.view
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.viewpager2.widget.ViewPager2
 import coil.load
 import com.example.weather.BuildConfig.APPLICATION_ID
 import com.example.weather.R
+import com.example.weather.commons.utils.checkForInternet
 import com.example.weather.databinding.ActivityMainBinding
 import com.example.weather.network.WeatherEntity
 import com.example.weather.network.WeatherService
-import com.example.weather.utils.checkForInternet
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,252 +44,47 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class MainActivity : AppCompatActivity() {
 
-    private val TAG = "MainActivityError"
-    private var unit: String = "imperial"
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
-    private var latitude = ""
-    private var longitude = ""
-    private var units = false
-    private var language = false
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var binding: ActivityMainBinding
+    private val adapter by lazy { ViewPagerAdapter(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        if (!checkPermissions()) {
-            requestPermissions()
-        } else {
-            // despues de que se obtiene la location se ejecuta el setUpViewData con esa location
-            getLastLocation() { location ->
-                setupViewData(location)
-            }
-        }
-
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        units = sharedPreferences.getBoolean("units", false)
-        language = sharedPreferences.getBoolean("language", false)
-
-    }
-
-    private fun setupViewData(location: Location) {
-
-        if (checkForInternet(this)) {
-            // Se coloca en este punto para permitir su ejecución
-            showIndicator(true)
-            lifecycleScope.launch {
-                latitude = location.latitude.toString()
-                longitude = location.longitude.toString()
-                formatResponse(getWeather())
-            }
-        } else {
-            showError(getString(R.string.no_internet_access))
-            binding.detailsContainer.isVisible = false
-        }
-    }
-
-    //Api call through a corrutine
-    private suspend fun getWeather(): WeatherEntity = withContext(Dispatchers.IO) {
-        Log.e(TAG, "CORR Lat: $latitude Long: $longitude")
-
-        // Retrofit constructor
-        val retrofit: Retrofit = Retrofit.Builder()
-            .baseUrl("https://api.openweathermap.org/")
-            //Loads the library that converts to gson
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        // Send arguments to weatherservice interface
-        val service: WeatherService = retrofit.create(WeatherService::class.java)
-        service.getWeatherById(latitude, longitude, unit, "en", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
-
-    }
-
-    private fun formatResponse(weatherEntity: WeatherEntity) {
-        try {
-            //Retrofit is in charge to parse our data so we can use it
-            val temp = "${weatherEntity.main.temp.toInt()}º"
-            val cityName = weatherEntity.name
-            val country = weatherEntity.sys.country
-            val address = "$cityName, $country"
-            val tempMin = "Mín: ${weatherEntity.main.temp_min.toInt()}º"
-            val tempMax = "Max: ${weatherEntity.main.temp_max.toInt()}º"
-            var status = ""
-            val weatherDescription = weatherEntity.weather[0].description
-            if (weatherDescription.isNotEmpty()) {
-                status = (weatherDescription[0].uppercaseChar() + weatherDescription.substring(1))
-            }
-            val dt = weatherEntity.dt
-            val updatedAt = getString(R.string.updatedAt) + SimpleDateFormat(
-                "hh:mm a",
-                Locale.ENGLISH
-            ).format(Date(dt * 1000))
-            val sunrise = weatherEntity.sys.sunrise
-            val sunriseFormat =
-                SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunrise * 1000))
-            val sunset = weatherEntity.sys.sunset
-            val sunsetFormat =
-                SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunset * 1000))
-            val wind = "${weatherEntity.wind.speed} km/h"
-            val pressure = "${weatherEntity.main.pressure} mb"
-            val humidity = "${weatherEntity.main.humidity}%"
-            val feelsLike =
-                getString(R.string.sensation) + weatherEntity.main.feels_like.toInt() + "º"
-            val icon = weatherEntity.weather[0].icon
-            val iconUrl = "https://openweathermap.org/img/w/$icon.png"
-
-            binding.apply {
-                iconImageView.load(iconUrl)
-                adressTextView.text = address
-                dateTextView.text = updatedAt
-                temperatureTextView.text = temp
-                statusTextView.text = status
-                tempMinTextView.text = tempMin
-                tempMaxTextView.text = tempMax
-                sunriseTextView.text = sunriseFormat
-                sunsetTextView.text = sunsetFormat
-                windTextView.text = wind
-                pressureTextView.text = pressure
-                humidityTextView.text = humidity
-                detailsContainer.isVisible = true
-                feelsLikeTextView.text = feelsLike
-            }
-
-            showIndicator(false)
-        } catch (exception: Exception) {
-            showError(getString(R.string.error_ocurred))
-            Log.e("Error format", "Ha ocurrido un error")
-        }
-    }
-
-    //Toast reutilizable
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showIndicator(visible: Boolean) {
-        binding.progressBarIndicator.isVisible = visible
-    }
-
-    fun getCelsius(weatherEntity: WeatherEntity) {
-        val tempFarenheit = weatherEntity.main.temp.toInt()
-        binding.buttonCelsius.setOnClickListener {
-            val tempCelsius = tempFarenheit.times(1.8).toInt()
-            println(tempCelsius)
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun getLastLocation(onLocation: (location: Location) -> Unit) {
-        Log.d(TAG, "Aquí estoy: $latitude Long: $longitude")
-        fusedLocationClient.lastLocation
-            .addOnCompleteListener { taskLocation ->
-                if (taskLocation.isSuccessful && taskLocation.result != null) {
-
-                    val location = taskLocation.result
-
-                    latitude = location?.latitude.toString()
-                    longitude = location?.longitude.toString()
-                    Log.d(TAG, "GetLasLoc Lat: $latitude Long: $longitude")
-
-                    onLocation(taskLocation.result)
-                } else {
-                    Log.w(TAG, "getLastLocation:exception", taskLocation.exception)
-                    showSnackbar(R.string.no_location_detected)
-                }
-            }
-    }
-
-    private fun checkPermissions() =
-        ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PermissionChecker.PERMISSION_GRANTED
-
-    private fun startLocationPermissionRequest() {
-        ActivityCompat.requestPermissions(
-            this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-            REQUEST_PERMISSIONS_REQUEST_CODE
-        )
-    }
-
-
-    private fun requestPermissions() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        ) {
-            // Gives an explenation to permit request. If the user denied permit but does't choose "don't ask again"
-            Log.i(
-                TAG,
-                "Location permission is needed to use the app"
-            )
-            showSnackbar(R.string.permission_rationale, android.R.string.ok) {
-                // Ask permit
-                startLocationPermissionRequest()
-            }
-
-        } else {
-            // Ask permit
-            Log.i(TAG, "Requesting permit")
-            startLocationPermissionRequest()
-        }
-    }
-
-    private fun showSnackbar(
-        snackStrId: Int,
-        actionStrId: Int = 0,
-        listener: View.OnClickListener? = null
-    ) {
-        val snackbar = Snackbar.make(
-            findViewById(android.R.id.content), getString(snackStrId),
-            BaseTransientBottomBar.LENGTH_INDEFINITE
-        )
-        if (actionStrId != 0 && listener != null) {
-            snackbar.setAction(getString(actionStrId), listener)
-        }
-        snackbar.show()
-    }
-
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        Log.i(TAG, "onRequestPermissionResult")
-        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
-            when {
-                // The flow is interrupted, the request is canceled
-                grantResults.isEmpty() -> Log.i(TAG, "The user interaction was canceled")
-
-                // Permit granted
-                (grantResults[0] == PackageManager.PERMISSION_GRANTED) -> getLastLocation(this::setupViewData)
-
-
-                else -> {
-                    showSnackbar(
-                        R.string.permission_denied_explanation, R.string.settings
-                    ) {
-                        // Builds the intent that shows the window configuration of the app.
-                        val intent = Intent().apply {
-                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                            data = Uri.fromParts("package", APPLICATION_ID, null)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        }
-                        startActivity(intent)
+        setContentView(R.layout.activity_main)
+        val pager = findViewById<ViewPager2>(R.id.pager)
+        val tab_layout = findViewById<TabLayout>(R.id.tab_layout)
+        pager.adapter = adapter
+        val tabLayoutMediator = TabLayoutMediator(tab_layout,pager,
+            TabLayoutMediator.TabConfigurationStrategy { tab, position ->
+                when(position + 1){
+                    1 -> {
+                        tab.text = "Opcion 1"
+                        tab.setIcon(R.drawable.ic_menu_camera)
+                        val badge: BadgeDrawable = tab.orCreateBadge
+                        badge.backgroundColor = ContextCompat.getColor(applicationContext, R.color.black)
+                        badge.isVisible = true
+                    }
+                    2 -> {
+                        tab.text = "Opcion 2"
+                        tab.setIcon(R.drawable.ic_menu_gallery)
+                        val badge: BadgeDrawable = tab.orCreateBadge
+                        badge.backgroundColor = ContextCompat.getColor(applicationContext, R.color.black)
+                        badge.number = 10
+                        badge.isVisible = true
+                    }
+                    3 -> {
+                        tab.text = "Opcion 3"
+                        tab.setIcon(R.drawable.ic_menu_slideshow)
+                        val badge: BadgeDrawable = tab.orCreateBadge
+                        badge.backgroundColor = ContextCompat.getColor(applicationContext, R.color.black)
+                        badge.number = 100
+                        badge.maxCharacterCount = 3
+                        badge.isVisible = true
                     }
                 }
-            }
-        }
+            })
+        tabLayoutMediator.attach()
+
     }
 }

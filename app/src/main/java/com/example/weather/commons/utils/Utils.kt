@@ -1,4 +1,4 @@
-package com.example.weather.utils
+package com.example.weather.commons.utils
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -28,3 +28,4 @@ fun checkForInternet(context: Context): Boolean {
         return networkInfo.isConnected
     }
 }
+
