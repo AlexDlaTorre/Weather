@@ -14,4 +14,4 @@ data class WeatherEntity(
     val wind: Wind,
     val weather: List<Weather>,
     val dt: Long
-)
+): java.io.Serializable
