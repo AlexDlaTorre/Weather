@@ -14,11 +14,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Weather.NoActionBar">
-        <activity
-            android:name=".view.ui.home.TabActivity"
-            android:exported="false"
-            android:label="@string/title_activity_tab"
-            android:theme="@style/Theme.Weather.NoActionBar.NoActionBar" />
         <!--
              TODO: Before you run your application, you need a Google Maps API key.
 
@@ -35,18 +30,9 @@
             android:value="YOUR_API_KEY" />
 
         <activity
-            android:name=".view.MapsActivity"
-            android:exported="false"
-            android:label="@string/title_activity_maps" />
-        <activity
-            android:name=".view.MainActivity2"
-            android:exported="false"
-            android:label="@string/title_activity_main2"
-            android:theme="@style/Theme.Weather.NoActionBar.NoActionBar" />
-        <activity
             android:name=".view.MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.Weather" />
+            android:theme="@style/Theme.Weather.NoActionBar" />
         <activity
             android:name=".view.SplashScreenActivity"
             android:exported="true"

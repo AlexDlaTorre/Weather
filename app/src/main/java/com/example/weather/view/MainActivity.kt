@@ -59,28 +59,14 @@ class MainActivity : AppCompatActivity() {
             TabLayoutMediator.TabConfigurationStrategy { tab, position ->
                 when(position + 1){
                     1 -> {
-                        tab.text = "Opcion 1"
-                        tab.setIcon(R.drawable.ic_menu_camera)
-                        val badge: BadgeDrawable = tab.orCreateBadge
-                        badge.backgroundColor = ContextCompat.getColor(applicationContext, R.color.black)
-                        badge.isVisible = true
+                        tab.text = "Today"
                     }
                     2 -> {
-                        tab.text = "Opcion 2"
-                        tab.setIcon(R.drawable.ic_menu_gallery)
-                        val badge: BadgeDrawable = tab.orCreateBadge
-                        badge.backgroundColor = ContextCompat.getColor(applicationContext, R.color.black)
-                        badge.number = 10
-                        badge.isVisible = true
+                        tab.text = "5 Days"
+
                     }
                     3 -> {
-                        tab.text = "Opcion 3"
-                        tab.setIcon(R.drawable.ic_menu_slideshow)
-                        val badge: BadgeDrawable = tab.orCreateBadge
-                        badge.backgroundColor = ContextCompat.getColor(applicationContext, R.color.black)
-                        badge.number = 100
-                        badge.maxCharacterCount = 3
-                        badge.isVisible = true
+                        tab.text = "Search"
                     }
                 }
             })
