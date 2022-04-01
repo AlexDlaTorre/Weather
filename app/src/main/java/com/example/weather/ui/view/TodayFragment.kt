@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -36,28 +35,19 @@ import java.util.*
 
 class TodayFragment : Fragment() {
     private val TAG = "TodayFragment Error"
-    private var unit: String = "metric"
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 200
     private var latitude = ""
     private var longitude = ""
-    private var units = false
-    private var language = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var binding: FragmentTodayBinding
 
-    companion object {
-        private const val ARG_OBJECT = "object"
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentTodayBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-//        return inflater.inflate(R.layout.fragment_today, container, false)
-        return root
+        return binding.root
 
     }
 
@@ -72,16 +62,11 @@ class TodayFragment : Fragment() {
                 setupViewData(location)
             }
         }
-
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        units = sharedPreferences.getBoolean("units", false)
-        language = sharedPreferences.getBoolean("language", false)
     }
 
     private fun setupViewData(location: Location) {
 
         if (checkForInternet(requireContext())) {
-            // Se coloca en este punto para permitir su ejecución
             showIndicator(true)
             lifecycleScope.launch {
                 latitude = location.latitude.toString()
@@ -91,55 +76,32 @@ class TodayFragment : Fragment() {
                 }
             }
         } else {
-            showError(getString(com.example.weather.R.string.no_internet_access))
+            showError(getString(R.string.no_internet_access))
             binding.detailsContainer.isVisible = false
         }
     }
 
     private suspend fun getWeather(): WeatherEntity = withContext(Dispatchers.IO) {
-        Log.e(TAG, "CORR Lat: $latitude Long: $longitude")
 
         val retrofit: Retrofit = Retrofit.Builder()
             .baseUrl("https://api.openweathermap.org/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        // Send arguments to weatherservice interface
         val service: WeatherService = retrofit.create(WeatherService::class.java)
         service.getWeatherByLonLat(
             latitude,
             longitude,
-            unit,
+            "metric",
             "en",
             "30ba6cd1ad33ea67e2dfd78a8d28ae62"
         )
 
     }
 
-//    class CountriesActivity : Activity() {
-//        override fun onCreate(icicle: Bundle?) {
-//            super.onCreate(icicle)
-//            setContentView(com.example.weather.R.layout.countries)
-//            val adapter = ArrayAdapter(
-//                this,
-//                android.R.layout.simple_dropdown_item_1line, COUNTRIES
-//            )
-//            val textView = findViewById<View>(com.example.weather.R.id.countries_list) as AutoCompleteTextView
-//            textView.setAdapter(adapter)
-//        }
-//
-//        companion object {
-//            private val COUNTRIES = arrayOf(
-//                "Belgium", "France", "Italy", "Germany", "Spain"
-//            )
-//        }
-//    }
-
-
     @RequiresApi(Build.VERSION_CODES.N)
     private fun formatResponse(weatherEntity: WeatherEntity) {
         try {
-            //Retrofit is in charge to parse our data so we can use it
             val temp = "${weatherEntity.main.temp.toInt()}ºC"
             val cityName = weatherEntity.name
             val country = weatherEntity.sys.country
@@ -188,15 +150,12 @@ class TodayFragment : Fragment() {
                 detailsContainer.isVisible = true
                 feelsLikeTextView.text = feelsLike
             }
-
             showIndicator(false)
         } catch (exception: Exception) {
             showError(getString(R.string.error_ocurred))
-            Log.e("Error format", "Ha ocurrido un error")
         }
     }
 
-    //Toast reutilizable
     private fun showError(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
@@ -210,13 +169,10 @@ class TodayFragment : Fragment() {
         fusedLocationClient.lastLocation
             .addOnCompleteListener { taskLocation ->
                 if (taskLocation.isSuccessful && taskLocation.result != null) {
-
                     val location = taskLocation.result
-
                     latitude = location?.latitude.toString()
                     longitude = location?.longitude.toString()
                     Log.d(TAG, "GetLasLoc Lat: $latitude Long: $longitude")
-
                     onLocation(taskLocation.result)
                 } else {
                     Log.w(TAG, "getLastLocation:exception", taskLocation.exception)
@@ -245,39 +201,11 @@ class TodayFragment : Fragment() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
         ) {
-            // Gives an explenation to permit request. If the user denied permit but does't choose "don't ask again"
-            Log.i(
-                TAG,
-                "Location permission is needed to use the app"
-            )
-//            showError(R.string.permission_rationale)
-//                , android.R.string.ok) {
-            // Ask permit
-//                startLocationPermissionRequest()
-//            }
-
+            showError("Location permission is needed to use the app")
         } else {
-            // Ask permit
-            Log.i(TAG, "Requesting permit")
             startLocationPermissionRequest()
         }
     }
-
-//    private fun showSnackbar(
-//        snackStrId: Int,
-//        actionStrId: Int = 0,
-//        listener: View.OnClickListener? = null
-//    ) {
-//        val snackbar = Snackbar.make(
-//            findViewById(android.R.id.content), getString(snackStrId),
-//            BaseTransientBottomBar.LENGTH_INDEFINITE
-//        )
-//        if (actionStrId != 0 && listener != null) {
-//            snackbar.setAction(getString(actionStrId), listener)
-//        }
-//        snackbar.show()
-//    }
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -285,28 +213,12 @@ class TodayFragment : Fragment() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        Log.i(TAG, "onRequestPermissionResult")
         if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
             when {
-                // The flow is interrupted, the request is canceled
                 grantResults.isEmpty() -> Log.i(TAG, "The user interaction was canceled")
-
-                // Permit granted
                 (grantResults[0] == PackageManager.PERMISSION_GRANTED) -> getLastLocation(this::setupViewData)
-
-
                 else -> {
-                    showError("ultimo snack")
-//                        R.string.permission_denied_explanation, R.string.settings
-//                    ) {
-//                        // Builds the intent that shows the window configuration of the app.
-//                        val intent = Intent().apply {
-//                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-//                            data = Uri.fromParts("package", APPLICATION_ID, null)
-//                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-//                        }
-//                        startActivity(intent)
-//                    }
+                    showError("Location is needed")
                 }
             }
         }
