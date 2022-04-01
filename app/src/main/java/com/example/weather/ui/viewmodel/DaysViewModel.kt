@@ -10,14 +10,11 @@ import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.io.IOException
 
-class TenDaysViewModel : ViewModel() {
+class DaysViewModel : ViewModel() {
 
-    //    //LiveDatas
-    val personajes = MutableLiveData<ArrayList<Daily>>()
+    val daysList = MutableLiveData<ArrayList<Daily>>()
     val error = MutableLiveData<ErrorResponse>()
-    val cargando = MutableLiveData<Boolean>()
-
-    //Casos de uso
+    val loading = MutableLiveData<Boolean>()
     private val useCase = ForecastUseCase()
 
     fun getForecast(
@@ -28,9 +25,8 @@ class TenDaysViewModel : ViewModel() {
         exclude: String,
         appid: String
     ) {
-        println("Ya estoy en viewmodel")
         viewModelScope.launch {
-            cargando.postValue(true)
+            loading.postValue(true)
             val respuesta = useCase.getForecastData(
                 lat,
                 lon,
@@ -41,8 +37,7 @@ class TenDaysViewModel : ViewModel() {
             )
             try {
                 if (respuesta.isSuccessful) {
-                    personajes.postValue(respuesta.body())
-                    println("jalooooooooo ${personajes.postValue(respuesta.body())}")
+                    daysList.postValue(respuesta.body())
                 } else if (respuesta.code() == 404) {
                     val gson = Gson()
                     val errorResponse =
@@ -51,12 +46,10 @@ class TenDaysViewModel : ViewModel() {
                 } else {
                     //error.postValue(respuesta.errorBody().toString())
                 }
-                cargando.postValue(false)
+                loading.postValue(false)
             } catch (io: IOException) {
                 error.postValue(io.message?.let { ErrorResponse(null, 404, null, null) })
-                //error.postValue(io.message?.let { ErrorResponse(io.hashCode(), it) })
-                cargando.postValue(false)
-                //error.postValue(io.message)
+                loading.postValue(false)
             }
         }
     }

@@ -28,7 +28,7 @@ import com.example.weather.model.days.Daily
 import com.example.weather.model.days.DaysAdapter
 import com.example.weather.model.days.OneEntity
 import com.example.weather.network.WeatherOneCallService
-import com.example.weather.ui.viewmodel.TenDaysViewModel
+import com.example.weather.ui.viewmodel.DaysViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
@@ -38,20 +38,17 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class DaysFragment : Fragment() {
-    private val TAG = "MainActivityError"
+    private val TAG = "DaysFragmentError"
     private var unit: String = "metric"
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
+    private val REQUEST_PERMISSIONS_REQUEST_CODE = 200
     private var latitude = ""
     private var longitude = ""
     private var units = false
     private var language = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var binding: FragmentDaysBinding
-    private val viewmodel: TenDaysViewModel by viewModels()
+    private val viewmodel: DaysViewModel by viewModels()
 
-    companion object {
-        private const val ARG_OBJECT = "object"
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,11 +58,10 @@ class DaysFragment : Fragment() {
         val root: View = binding.root
         observers()
         return root
-
     }
 
     private fun observers() {
-        viewmodel.personajes.observe(viewLifecycleOwner, ::mostrarPersonajes)
+        viewmodel.daysList.observe(viewLifecycleOwner, ::showDays)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -88,14 +84,12 @@ class DaysFragment : Fragment() {
     private fun setupViewData(location: Location) {
 
         if (checkForInternet(requireContext())) {
-            // Se coloca en este punto para permitir su ejecución
-//            showIndicator(true)
+
             lifecycleScope.launch {
                 latitude = location.latitude.toString()
                 longitude = location.longitude.toString()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    formatResponse(getWeatherByLonLat2())
-                    println("formatResponse(getWeather2())")
+                    getWeatherByLonLat2()
                 }
             }
         } else {
@@ -112,7 +106,6 @@ class DaysFragment : Fragment() {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        // Send arguments to weatherservice interface
         val service: WeatherOneCallService = retrofit.create(WeatherOneCallService::class.java)
         service.getWeatherByLonLat2(
             latitude,
@@ -125,40 +118,6 @@ class DaysFragment : Fragment() {
 
     }
 
-//    class CountriesActivity : Activity() {
-//        override fun onCreate(icicle: Bundle?) {
-//            super.onCreate(icicle)
-//            setContentView(com.example.weather.R.layout.countries)
-//            val adapter = ArrayAdapter(
-//                this,
-//                android.R.layout.simple_dropdown_item_1line, COUNTRIES
-//            )
-//            val textView = findViewById<View>(com.example.weather.R.id.countries_list) as AutoCompleteTextView
-//            textView.setAdapter(adapter)
-//        }
-//
-//        companion object {
-//            private val COUNTRIES = arrayOf(
-//                "Belgium", "France", "Italy", "Germany", "Spain"
-//            )
-//        }
-//    }
-
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun formatResponse(oneEntity: OneEntity) {
-
-        println("AQUI DIARIO2 ${oneEntity.daily}")
-        try {
-            println("AQUI DIARIO ${oneEntity.daily}")
-//            showIndicator(false)
-        } catch (exception: Exception) {
-            showError(getString(R.string.error_ocurred))
-            Log.e("Error format", "Ha ocurrido un error")
-        }
-    }
-
-    //Toast reutilizable
     private fun showError(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
@@ -196,7 +155,7 @@ class DaysFragment : Fragment() {
             }
     }
 
-    private fun mostrarPersonajes(personajes: ArrayList<Daily>) {
+    private fun showDays(personajes: ArrayList<Daily>) {
         personajes.forEach {
             initRecycler(personajes, binding.recyclerViewDays)
         }
