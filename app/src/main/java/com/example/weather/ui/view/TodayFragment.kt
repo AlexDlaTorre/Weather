@@ -35,9 +35,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
 class TodayFragment : Fragment() {
-    private val TAG = "MainActivityError"
+    private val TAG = "TodayFragment Error"
     private var unit: String = "metric"
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
+    private val REQUEST_PERMISSIONS_REQUEST_CODE = 200
     private var latitude = ""
     private var longitude = ""
     private var units = false
