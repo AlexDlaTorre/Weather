@@ -36,7 +36,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.*
 
 class DaysFragment : Fragment() {
     private val TAG = "MainActivityError"
@@ -64,8 +63,9 @@ class DaysFragment : Fragment() {
         return root
 
     }
+
     private fun observers() {
-        viewmodel.personajes.observe(viewLifecycleOwner,::mostrarPersonajes)
+        viewmodel.personajes.observe(viewLifecycleOwner, ::mostrarPersonajes)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -80,7 +80,7 @@ class DaysFragment : Fragment() {
     }
 
     fun startApp() {
-        getLastLocation() { location ->
+        getLastLocation { location ->
             setupViewData(location)
         }
     }
@@ -94,7 +94,7 @@ class DaysFragment : Fragment() {
                 latitude = location.latitude.toString()
                 longitude = location.longitude.toString()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    formatResponse(getWeather2())
+                    formatResponse(getWeatherByLonLat2())
                     println("formatResponse(getWeather2())")
                 }
             }
@@ -104,7 +104,7 @@ class DaysFragment : Fragment() {
         }
     }
 
-    private suspend fun getWeather2(): OneEntity = withContext(Dispatchers.IO) {
+    private suspend fun getWeatherByLonLat2(): OneEntity = withContext(Dispatchers.IO) {
         Log.e(TAG, "CORR Lat: $latitude Long: $longitude")
 
         val retrofit: Retrofit = Retrofit.Builder()
@@ -195,14 +195,15 @@ class DaysFragment : Fragment() {
                 }
             }
     }
+
     private fun mostrarPersonajes(personajes: ArrayList<Daily>) {
         personajes.forEach {
-            initRecycler(personajes,binding?.recyclerViewDays)
+            initRecycler(personajes, binding.recyclerViewDays)
         }
     }
 
-    private fun initRecycler(lista: ArrayList<Daily>, recyclerView: RecyclerView?){
-        val adaptador = DaysAdapter(requireActivity(),lista)
+    private fun initRecycler(lista: ArrayList<Daily>, recyclerView: RecyclerView?) {
+        val adaptador = DaysAdapter(requireActivity(), lista)
         recyclerView?.apply {
             layoutManager = LinearLayoutManager(requireActivity())
             adapter = adaptador

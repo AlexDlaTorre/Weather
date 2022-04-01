@@ -1,4 +1,4 @@
-package com.example.weather.model.days
+package com.example.weather.network
 
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit

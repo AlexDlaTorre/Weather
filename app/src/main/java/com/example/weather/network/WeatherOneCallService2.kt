@@ -12,7 +12,7 @@ interface WeatherOneCallService2 {
         @Query("lon") lon: Double,
         @Query("units") units: String?,
         @Query("lang") lang: String?,
-        @Query("exclude") exclude:String,
+        @Query("exclude") exclude: String,
         @Query("appid") appid: String
     ): Response<OneEntity>
 }

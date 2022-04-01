@@ -68,7 +68,7 @@ class TodayFragment : Fragment() {
         if (!checkPermissions()) {
             requestPermissions()
         } else {
-            getLastLocation() { location ->
+            getLastLocation { location ->
                 setupViewData(location)
             }
         }
@@ -106,7 +106,13 @@ class TodayFragment : Fragment() {
 
         // Send arguments to weatherservice interface
         val service: WeatherService = retrofit.create(WeatherService::class.java)
-        service.getWeatherByLonLat(latitude, longitude, unit, "en", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
+        service.getWeatherByLonLat(
+            latitude,
+            longitude,
+            unit,
+            "en",
+            "30ba6cd1ad33ea67e2dfd78a8d28ae62"
+        )
 
     }
 
@@ -152,10 +158,12 @@ class TodayFragment : Fragment() {
             ).format(Date(dt * 1000))
             val sunrise = weatherEntity.sys.sunrise
             val sunriseFormat =
-                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunrise * 1000))
+                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+                    .format(Date(sunrise * 1000))
             val sunset = weatherEntity.sys.sunset
             val sunsetFormat =
-                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunset * 1000))
+                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+                    .format(Date(sunset * 1000))
             val wind = "${weatherEntity.wind.speed} km/h"
             val pressure = "${weatherEntity.main.pressure} mb"
             val humidity = "${weatherEntity.main.humidity}%"
@@ -244,7 +252,7 @@ class TodayFragment : Fragment() {
             )
 //            showError(R.string.permission_rationale)
 //                , android.R.string.ok) {
-                // Ask permit
+            // Ask permit
 //                startLocationPermissionRequest()
 //            }
 

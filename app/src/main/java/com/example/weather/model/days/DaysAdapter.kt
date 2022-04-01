@@ -44,7 +44,7 @@ class DaysAdapter
             date.plusDays(8)
         )
 
-       val daysIterator = daysOfWeek.get(position)
+        val daysIterator = daysOfWeek.get(position)
 
         with(holder) {
             binding.apply {

@@ -64,7 +64,7 @@
                 android:layout_width="match_parent"
                 android:background="@android:color/transparent"
                 android:layout_height="match_parent"
-                tools:listitem="@layout/item_days"/>
+                tools:listitem="@layout/item_days" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 

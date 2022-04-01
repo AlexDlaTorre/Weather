@@ -1,5 +1,7 @@
-package com.example.weather.model.days
+package com.example.weather.usecase
 
+import com.example.weather.model.days.Daily
+import com.example.weather.repository.ForecastRepository
 import retrofit2.Response
 
 class ForecastUseCase {

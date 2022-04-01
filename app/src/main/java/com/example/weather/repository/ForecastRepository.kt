@@ -1,5 +1,7 @@
-package com.example.weather.model.days
+package com.example.weather.repository
 
+import com.example.weather.model.days.OneEntity
+import com.example.weather.network.RetrofitInstance
 import com.example.weather.network.WeatherOneCallService2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -19,9 +19,9 @@ class MainActivity : AppCompatActivity() {
         val pager = findViewById<ViewPager2>(R.id.pager)
         val tab_layout = findViewById<TabLayout>(R.id.tab_layout)
         pager.adapter = adapter
-        val tabLayoutMediator = TabLayoutMediator(tab_layout,pager,
+        val tabLayoutMediator = TabLayoutMediator(tab_layout, pager,
             TabLayoutMediator.TabConfigurationStrategy { tab, position ->
-                when(position + 1){
+                when (position + 1) {
                     1 -> {
                         tab.text = "Today"
                     }
