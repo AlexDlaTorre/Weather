@@ -202,17 +202,17 @@ class TenDaysFragment : Fragment() {
     }
     private fun mostrarPersonajes(personajes: ArrayList<Daily>) {
         personajes.forEach {
-//            initRecycler(personajes,binding?.recyclerView)
+            initRecycler(personajes,binding?.recyclerView)
         }
     }
 
-//    private fun initRecycler(lista: ArrayList<Daily>, recyclerView: RecyclerView?){
-//        val adaptador = DaysAdapter(requireActivity(),lista)
-//        recyclerView?.apply {
-//            layoutManager = LinearLayoutManager(requireActivity())
-//            adapter = adaptador
-//        }
-//    }
+    private fun initRecycler(lista: ArrayList<Daily>, recyclerView: RecyclerView?){
+        val adaptador = DaysAdapter(requireActivity(),lista)
+        recyclerView?.apply {
+            layoutManager = LinearLayoutManager(requireActivity())
+            adapter = adaptador
+        }
+    }
 
     private fun checkPermissions() =
         ActivityCompat.checkSelfPermission(
