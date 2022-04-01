@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/huastecasantacatarina"
-    tools:context=".view.TodayFragment">
+    tools:context=".ui.view.TodayFragment">
 
     <ScrollView
         android:layout_width="match_parent"

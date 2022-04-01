@@ -1,6 +1,6 @@
 package com.example.weather.network
 
-import com.example.weather.model.one.OneEntity
+import com.example.weather.model.days.OneEntity
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query

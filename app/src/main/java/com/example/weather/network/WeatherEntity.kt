@@ -1,9 +1,9 @@
 package com.example.weather.network
 
-import com.example.weather.model.Main
-import com.example.weather.model.Sys
-import com.example.weather.model.Weather
-import com.example.weather.model.Wind
+import com.example.weather.model.today.Main
+import com.example.weather.model.today.Sys
+import com.example.weather.model.today.Weather
+import com.example.weather.model.today.Wind
 
 data class WeatherEntity(
     val base: String,

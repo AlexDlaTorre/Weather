@@ -1,4 +1,4 @@
-package com.example.weather.model.one
+package com.example.weather.model.days
 
 import retrofit2.Response
 

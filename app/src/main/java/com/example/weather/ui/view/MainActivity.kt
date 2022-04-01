@@ -1,9 +1,10 @@
-package com.example.weather.view
+package com.example.weather.ui.view
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.example.weather.R
+import com.example.weather.adapters.ViewPagerAdapter
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -25,11 +26,8 @@ class MainActivity : AppCompatActivity() {
                         tab.text = "Today"
                     }
                     2 -> {
-                        tab.text = "5 Days"
+                        tab.text = "8 Days"
 
-                    }
-                    3 -> {
-                        tab.text = "Search"
                     }
                 }
             })

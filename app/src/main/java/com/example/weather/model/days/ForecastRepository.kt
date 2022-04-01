@@ -1,4 +1,4 @@
-package com.example.weather.model.one
+package com.example.weather.model.days
 
 import com.example.weather.network.WeatherOneCallService2
 import kotlinx.coroutines.Dispatchers

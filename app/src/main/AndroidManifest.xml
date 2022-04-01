@@ -30,11 +30,11 @@
             android:value="YOUR_API_KEY" />
 
         <activity
-            android:name=".view.MainActivity"
+            android:name="com.example.weather.ui.view.MainActivity"
             android:exported="false"
             android:theme="@style/Theme.Weather.NoActionBar" />
         <activity
-            android:name=".view.SplashScreenActivity"
+            android:name="com.example.weather.ui.view.SplashScreenActivity"
             android:exported="true"
             android:theme="@style/Theme.Weather.NoActionBar">
             <intent-filter>

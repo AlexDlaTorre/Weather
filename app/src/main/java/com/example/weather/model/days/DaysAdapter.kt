@@ -1,4 +1,4 @@
-package com.example.weather.model.one
+package com.example.weather.model.days
 
 import android.app.Activity
 import android.os.Build
@@ -13,7 +13,7 @@ import java.time.LocalDate
 
 
 class DaysAdapter
-    (val activity: Activity, val personajes: ArrayList<Daily>) :
+    (val activity: Activity, val days: ArrayList<Daily>) :
     RecyclerView.Adapter<DaysAdapter.DaysHolder>() {
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -26,12 +26,11 @@ class DaysAdapter
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onBindViewHolder(holder: DaysAdapter.DaysHolder, position: Int) {
-        val personaje = personajes.get(position)
+        val day = days.get(position)
 
-        val tempMin = "Mín: ${personaje.temp?.min?.toInt()}ºC"
-        val tempMax = "Max: ${personaje.temp?.max?.toInt()}ºC"
+        val tempMin = "Mín: ${day.temp?.min?.toInt()}ºC"
+        val tempMax = "Max: ${day.temp?.max?.toInt()}ºC"
         val date = LocalDate.now()
-        var dateInterval = date.plusDays(1)
 
         val daysOfWeek: MutableList<LocalDate> = mutableListOf(
             date,
@@ -45,19 +44,18 @@ class DaysAdapter
             date.plusDays(8)
         )
 
-        val formatedDays =daysOfWeek.size
        val daysIterator = daysOfWeek.get(position)
 
         with(holder) {
             binding.apply {
-                textViewtempmin.text = tempMin.toString()
-                textViewtempmax.text = tempMax.toString()
-                textViewday.text = daysIterator.toString()
+                textViewTempMin.text = tempMin.toString()
+                textViewTempMax.text = tempMax.toString()
+                textViewDay.text = daysIterator.toString()
             }
         }
     }
 
-    override fun getItemCount(): Int = personajes.size
+    override fun getItemCount(): Int = days.size
 
     class DaysHolder(view: View) : RecyclerView.ViewHolder(view) {
         val binding = ItemDaysBinding.bind(view)

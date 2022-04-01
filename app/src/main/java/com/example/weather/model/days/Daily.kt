@@ -1,6 +1,5 @@
-package com.example.weather.model.one
+package com.example.weather.model.days
 
-import com.example.weather.model.Weather
 import com.google.gson.annotations.SerializedName
 
 data class Daily(

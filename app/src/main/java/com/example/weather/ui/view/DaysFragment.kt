@@ -1,16 +1,13 @@
-package com.example.weather.view
+package com.example.weather.ui.view
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,20 +16,21 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import coil.load
-import com.example.weather.BuildConfig.APPLICATION_ID
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.weather.R
 import com.example.weather.commons.utils.checkForInternet
-import com.example.weather.databinding.FragmentTodayBinding
-import com.example.weather.network.WeatherEntity
-import com.example.weather.network.WeatherService
+import com.example.weather.databinding.FragmentDaysBinding
+import com.example.weather.model.days.Daily
+import com.example.weather.model.days.DaysAdapter
+import com.example.weather.model.days.OneEntity
+import com.example.weather.network.WeatherOneCallService
+import com.example.weather.ui.viewmodel.TenDaysViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.material.snackbar.BaseTransientBottomBar
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +38,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
-class TodayFragment : Fragment() {
+class DaysFragment : Fragment() {
     private val TAG = "MainActivityError"
     private var unit: String = "metric"
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
@@ -49,7 +47,8 @@ class TodayFragment : Fragment() {
     private var units = false
     private var language = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var binding: FragmentTodayBinding
+    private lateinit var binding: FragmentDaysBinding
+    private val viewmodel: TenDaysViewModel by viewModels()
 
     companion object {
         private const val ARG_OBJECT = "object"
@@ -59,50 +58,53 @@ class TodayFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentTodayBinding.inflate(inflater, container, false)
+        binding = FragmentDaysBinding.inflate(inflater, container, false)
         val root: View = binding.root
-
-//        return inflater.inflate(R.layout.fragment_today, container, false)
+        observers()
         return root
 
+    }
+    private fun observers() {
+        viewmodel.personajes.observe(viewLifecycleOwner,::mostrarPersonajes)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
-        if (!checkPermissions()) {
-            requestPermissions()
-        } else {
-            getLastLocation() { location ->
-                setupViewData(location)
-            }
-        }
-
+        startApp()
+        observers()
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         units = sharedPreferences.getBoolean("units", false)
         language = sharedPreferences.getBoolean("language", false)
+    }
+
+    fun startApp() {
+        getLastLocation() { location ->
+            setupViewData(location)
+        }
     }
 
     private fun setupViewData(location: Location) {
 
         if (checkForInternet(requireContext())) {
             // Se coloca en este punto para permitir su ejecución
-            showIndicator(true)
+//            showIndicator(true)
             lifecycleScope.launch {
                 latitude = location.latitude.toString()
                 longitude = location.longitude.toString()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    formatResponse(getWeather())
+                    formatResponse(getWeather2())
+                    println("formatResponse(getWeather2())")
                 }
             }
         } else {
             showError(getString(com.example.weather.R.string.no_internet_access))
-            binding.detailsContainer.isVisible = false
+
         }
     }
 
-    private suspend fun getWeather(): WeatherEntity = withContext(Dispatchers.IO) {
+    private suspend fun getWeather2(): OneEntity = withContext(Dispatchers.IO) {
         Log.e(TAG, "CORR Lat: $latitude Long: $longitude")
 
         val retrofit: Retrofit = Retrofit.Builder()
@@ -111,8 +113,15 @@ class TodayFragment : Fragment() {
             .build()
 
         // Send arguments to weatherservice interface
-        val service: WeatherService = retrofit.create(WeatherService::class.java)
-        service.getWeatherByLonLat(latitude, longitude, unit, "en", "30ba6cd1ad33ea67e2dfd78a8d28ae62")
+        val service: WeatherOneCallService = retrofit.create(WeatherOneCallService::class.java)
+        service.getWeatherByLonLat2(
+            latitude,
+            longitude,
+            unit,
+            "en",
+            "minutely,hourly",
+            "30ba6cd1ad33ea67e2dfd78a8d28ae62"
+        )
 
     }
 
@@ -137,57 +146,12 @@ class TodayFragment : Fragment() {
 
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun formatResponse(weatherEntity: WeatherEntity) {
+    private fun formatResponse(oneEntity: OneEntity) {
+
+        println("AQUI DIARIO2 ${oneEntity.daily}")
         try {
-            //Retrofit is in charge to parse our data so we can use it
-            val temp = "${weatherEntity.main.temp.toInt()}ºC"
-            val cityName = weatherEntity.name
-            val country = weatherEntity.sys.country
-            val address = "$cityName, $country"
-            val tempMin = "Mín: ${weatherEntity.main.temp_min.toInt()}ºC"
-            val tempMax = "Max: ${weatherEntity.main.temp_max.toInt()}ºC"
-            var status = ""
-            val weatherDescription = weatherEntity.weather[0].description
-            if (weatherDescription.isNotEmpty()) {
-                status = (weatherDescription[0].uppercaseChar() + weatherDescription.substring(1))
-            }
-            val dt = weatherEntity.dt
-            val updatedAt = getString(R.string.updatedAt) + android.icu.text.SimpleDateFormat(
-                "hh:mm a",
-                Locale.ENGLISH
-            ).format(Date(dt * 1000))
-            val sunrise = weatherEntity.sys.sunrise
-            val sunriseFormat =
-                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunrise * 1000))
-            val sunset = weatherEntity.sys.sunset
-            val sunsetFormat =
-                android.icu.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunset * 1000))
-            val wind = "${weatherEntity.wind.speed} km/h"
-            val pressure = "${weatherEntity.main.pressure} mb"
-            val humidity = "${weatherEntity.main.humidity}%"
-            val feelsLike =
-                getString(R.string.sensation) + weatherEntity.main.feels_like.toInt() + "º"
-            val icon = weatherEntity.weather[0].icon
-            val iconUrl = "https://openweathermap.org/img/w/$icon.png"
-
-            binding.apply {
-                iconImageView.load(iconUrl)
-                adressTextView.text = address
-                dateTextView.text = updatedAt
-                temperatureTextView.text = temp
-                statusTextView.text = status
-                tempMinTextView.text = tempMin
-                tempMaxTextView.text = tempMax
-                sunriseTextView.text = sunriseFormat
-                sunsetTextView.text = sunsetFormat
-                windTextView.text = wind
-                pressureTextView.text = pressure
-                humidityTextView.text = humidity
-                detailsContainer.isVisible = true
-                feelsLikeTextView.text = feelsLike
-            }
-
-            showIndicator(false)
+            println("AQUI DIARIO ${oneEntity.daily}")
+//            showIndicator(false)
         } catch (exception: Exception) {
             showError(getString(R.string.error_ocurred))
             Log.e("Error format", "Ha ocurrido un error")
@@ -199,9 +163,9 @@ class TodayFragment : Fragment() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
-    private fun showIndicator(visible: Boolean) {
-        binding.progressBarIndicator.isVisible = visible
-    }
+//    private fun showIndicator(visible: Boolean) {
+//        binding.progressBar_loading.isVisible = visible
+//    }
 
     @SuppressLint("MissingPermission")
     private fun getLastLocation(onLocation: (location: Location) -> Unit) {
@@ -213,6 +177,15 @@ class TodayFragment : Fragment() {
 
                     latitude = location?.latitude.toString()
                     longitude = location?.longitude.toString()
+
+                    viewmodel.getForecast(
+                        location.latitude,
+                        location.longitude,
+                        unit,
+                        "en",
+                        "minutely,hourly",
+                        "30ba6cd1ad33ea67e2dfd78a8d28ae62"
+                    )
                     Log.d(TAG, "GetLasLoc Lat: $latitude Long: $longitude")
 
                     onLocation(taskLocation.result)
@@ -221,6 +194,19 @@ class TodayFragment : Fragment() {
                     showError("No location detected")
                 }
             }
+    }
+    private fun mostrarPersonajes(personajes: ArrayList<Daily>) {
+        personajes.forEach {
+            initRecycler(personajes,binding?.recyclerViewDays)
+        }
+    }
+
+    private fun initRecycler(lista: ArrayList<Daily>, recyclerView: RecyclerView?){
+        val adaptador = DaysAdapter(requireActivity(),lista)
+        recyclerView?.apply {
+            layoutManager = LinearLayoutManager(requireActivity())
+            adapter = adaptador
+        }
     }
 
     private fun checkPermissions() =
@@ -250,7 +236,7 @@ class TodayFragment : Fragment() {
             )
 //            showError(R.string.permission_rationale)
 //                , android.R.string.ok) {
-                // Ask permit
+            // Ask permit
 //                startLocationPermissionRequest()
 //            }
 

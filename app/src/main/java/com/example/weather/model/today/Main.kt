@@ -1,4 +1,4 @@
-package com.example.weather.model
+package com.example.weather.model.today
 
 data class Main(
     val temp: Double,
